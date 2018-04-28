@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import fr.neamar.kiss.KissApplication;
+import fr.neamar.kiss.normalizer.StringNormalizer;
 import fr.neamar.kiss.result.AppResult;
 import fr.neamar.kiss.result.ContactsResult;
 import fr.neamar.kiss.result.PhoneResult;
@@ -20,10 +21,12 @@ import fr.neamar.kiss.result.SettingsResult;
 import fr.neamar.kiss.result.ShortcutsResult;
 import fr.neamar.kiss.searcher.QueryInterface;
 import fr.neamar.kiss.ui.ListPopup;
+import fr.neamar.kiss.utils.FuzzyScore;
 
 public class RecordAdapter extends BaseAdapter {
     private final Context context;
     private final QueryInterface parent;
+    private FuzzyScore fuzzyScore;
 
     /**
      * Array list containing all the results currently displayed
@@ -34,6 +37,7 @@ public class RecordAdapter extends BaseAdapter {
         this.context = context;
         this.parent = parent;
         this.results = results;
+        this.fuzzyScore = null;
     }
 
     @Override
@@ -93,7 +97,7 @@ public class RecordAdapter extends BaseAdapter {
                 convertView = null;
             }
         }
-        View view = results.get(position).display(context, results.size() - position, convertView);
+        View view = results.get(position).display(context, results.size() - position, convertView, fuzzyScore);
         //Log.d( "TBog", "getView pos " + position + " convertView " + ((convertView == null) ? "null" : convertView.toString()) + " will return " + view.toString() );
         view.setTag(getItemViewType(position));
         return view;
@@ -139,8 +143,11 @@ public class RecordAdapter extends BaseAdapter {
         notifyDataSetChanged();
     }
 
-    public void updateResults(List<Result> results) {
+    public void updateResults(List<Result> results, String query) {
         this.results = results;
+        StringNormalizer.Result queryNormalized = StringNormalizer.normalizeWithResult(query, false);
+
+        fuzzyScore = new FuzzyScore(queryNormalized.codePoints, true);
         notifyDataSetChanged();
     }
 

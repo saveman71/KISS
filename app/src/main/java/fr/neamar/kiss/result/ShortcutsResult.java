@@ -30,6 +30,7 @@ import fr.neamar.kiss.R;
 import fr.neamar.kiss.adapter.RecordAdapter;
 import fr.neamar.kiss.pojo.ShortcutsPojo;
 import fr.neamar.kiss.ui.ListPopup;
+import fr.neamar.kiss.utils.FuzzyScore;
 import fr.neamar.kiss.utils.SpaceTokenizer;
 
 public class ShortcutsResult extends Result {
@@ -41,7 +42,7 @@ public class ShortcutsResult extends Result {
     }
 
     @Override
-    public View display(final Context context, int position, View v) {
+    public View display(final Context context, int position, View v, FuzzyScore fuzzyScore) {
         if (v == null)
             v = inflateFromId(context, R.layout.item_shortcut);
 
