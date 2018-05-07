@@ -30,6 +30,7 @@ import fr.neamar.kiss.R;
 import fr.neamar.kiss.adapter.RecordAdapter;
 import fr.neamar.kiss.pojo.ShortcutsPojo;
 import fr.neamar.kiss.ui.ListPopup;
+import fr.neamar.kiss.utils.FuzzyScore;
 import fr.neamar.kiss.utils.SpaceTokenizer;
 
 public class ShortcutsResult extends Result {
@@ -41,23 +42,25 @@ public class ShortcutsResult extends Result {
     }
 
     @Override
-    public View display(final Context context, int position, View v) {
+    public View display(final Context context, int position, View v, FuzzyScore fuzzyScore) {
         if (v == null)
             v = inflateFromId(context, R.layout.item_shortcut);
 
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
 
         TextView shortcutName = v.findViewById(R.id.item_app_name);
-        shortcutName.setText(enrichText(shortcutPojo.getName(), shortcutPojo.nameMatchPositions, context));
+        shortcutName.setText(shortcutPojo.getName());
 
         TextView tagsView = v.findViewById(R.id.item_app_tag);
-        //Hide tags view if tags are empty or if user has selected to hide them and the query doesn't match tags
-        if (shortcutPojo.getTags().isEmpty() ||
-                (!prefs.getBoolean("tags-visible", true) && !shortcutPojo.tagsMatchPositions.isEmpty())) {
+
+        // Hide tags view if tags are empty
+        if (shortcutPojo.getTags().isEmpty()) {
             tagsView.setVisibility(View.GONE);
-        } else {
+        } else if (displayHighlighted(shortcutPojo.normalizedTags, shortcutPojo.getTags(),
+                fuzzyScore, tagsView, context) || prefs.getBoolean("tags-visible", true)) {
             tagsView.setVisibility(View.VISIBLE);
-            tagsView.setText(enrichText(shortcutPojo.getTags(), shortcutPojo.tagsMatchPositions, context));
+        } else {
+            tagsView.setVisibility(View.GONE);
         }
 
         final ImageView shortcutIcon = v.findViewById(R.id.item_shortcut_icon);
@@ -167,8 +170,6 @@ public class ShortcutsResult extends Result {
                 // Refresh tags for given app
                 pojo.setTags(tagInput.getText().toString());
                 KissApplication.getApplication(context).getDataHandler().getTagsHandler().setTags(pojo.id, pojo.getTags());
-                // TODO: update the displayTags with proper highlight
-                pojo.clearTagHighlight();
                 // Show toast message
                 String msg = context.getResources().getString(R.string.tags_confirmation_added);
                 Toast.makeText(context, msg, Toast.LENGTH_SHORT).show();
